@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101816">
+<title>校园 AR · 初版</title>
+<style>
+:root{color-scheme:dark;--bg:#101816;--panel:#19231f;--line:#33423a;--text:#edf3eb;--muted:#a8b4a8;--lime:#c5e881;--cyan:#80d9d0;--amber:#e8c578}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Microsoft YaHei",sans-serif;min-height:100vh}button{font:inherit;color:inherit}.shell{max-width:1440px;margin:auto;padding:26px 32px 36px}.top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.mark{width:38px;height:38px;border:1px solid #71846e;border-radius:50%;display:grid;place-items:center;color:var(--lime);font-size:20px}.eyebrow{font-size:11px;color:var(--muted);letter-spacing:1px}.title{font-size:20px;font-weight:650;margin-top:3px}.actions{display:flex;gap:8px}.btn{height:40px;padding:0 14px;border:1px solid var(--line);border-radius:6px;background:#202c26;cursor:pointer}.btn:hover{border-color:#71846e}.btn.primary{background:var(--lime);color:#162014;border-color:var(--lime);font-weight:650}.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}.stage{position:relative;overflow:hidden;background:#0c100e;border:1px solid var(--line);border-radius:6px;min-height:520px;aspect-ratio:1.5;touch-action:none}.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}.status{position:absolute;z-index:2;top:18px;left:18px;display:flex;align-items:center;gap:9px;padding:9px 12px;background:rgba(16,24,22,.84);border:1px solid #435249;border-radius:4px;font-size:12px;pointer-events:none}.dot{width:7px;height:7px;background:var(--lime);border-radius:50%;box-shadow:0 0 10px var(--lime)}.compass{position:absolute;z-index:2;right:18px;top:18px;color:#e4eee1;font:11px monospace;background:#101816b8;padding:7px 9px;border-radius:3px;pointer-events:none}.bottom-label{position:absolute;z-index:2;left:18px;bottom:18px;font-size:12px;color:#e9f0e7;pointer-events:none}.side{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:18px}.side h2{font-size:15px;margin:0}.side p{color:var(--muted);font-size:12px;line-height:1.7;margin:7px 0 0}.item{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:10px 0;background:none;border:0;border-bottom:1px solid #314038;cursor:pointer}.item:last-child{border:0}.swatch{width:10px;height:10px;border-radius:50%;background:var(--lime);flex:none}.item:nth-child(2) .swatch{background:var(--cyan)}.item:nth-child(3) .swatch{background:var(--amber)}.item:nth-child(4) .swatch{background:#e9c7c4}.item strong{display:block;font-size:13px;font-weight:600}.item small{color:var(--muted);font-size:11px}.detail{padding:12px;background:#111a16;border:1px solid #334239;border-radius:4px}.detail-title{font-size:13px;font-weight:650}.detail-meta{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.6}.mode{display:grid;grid-template-columns:1fr 1fr;gap:5px;background:#111a16;padding:4px;border-radius:5px}.mode button{height:34px;border:0;background:transparent;color:var(--muted);border-radius:3px;cursor:pointer;font-size:12px}.mode button.selected{background:#354338;color:var(--text)}.note{font-size:10px!important;color:#8f9c90!important;border-top:1px solid #334239;padding-top:12px}.foot{font-size:11px;color:var(--muted);margin-top:12px}@media(max-width:850px){.shell{padding:16px}.layout{grid-template-columns:1fr}.stage{min-height:0;aspect-ratio:1.02}.side{gap:13px}.item-list{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}.top{align-items:flex-start}.actions .btn{height:36px;padding:0 10px;font-size:12px}}
+.item[aria-pressed="true"]{background:#27362e;border-radius:5px;padding-inline:9px}
+.bottom-label{background:#17221dd9;border-radius:4px;padding:6px 9px}
+</style>
+</head>
+<body><main class="shell">
+<style>.actions .btn{display:inline-flex;align-items:center;text-decoration:none}</style>
+<header class="top"><div class="brand"><div class="mark">⌖</div><div><div class="eyebrow">CAMPUS · SITE PLAN</div><div class="title">校园建筑布局</div></div></div><div class="actions"><button class="btn" id="overviewBtn">校园全景</button><button class="btn" id="routeBtn">显示路线</button><a class="btn primary" href="./ar.html">实景 AR</a></div></header>
+<section class="layout"><div class="stage" id="stage"><canvas id="scene" aria-label="可交互的校园三维场景"></canvas><div class="status"><span class="dot"></span><span id="statusText">3D 场景已加载 · 点击模型查看点位</span></div><div class="compass">N ↑</div><div class="bottom-label">拖动旋转　·　滚轮缩放　·　点击建筑</div></div>
+<aside class="side"><div><h2>建筑与区域</h2><p>西侧教学楼已按现场照片补全立面</p></div><div class="item-list"><button class="item" data-place="主教学楼"><span class="swatch"></span><span><strong>主教学楼</strong><small>北侧 · 三层</small></span></button><button class="item" data-place="西侧教学楼"><span class="swatch"></span><span><strong>西侧教学楼</strong><small>西侧 · 四层</small></span></button><button class="item" data-place="东侧教学楼"><span class="swatch"></span><span><strong>东侧教学楼</strong><small>东侧 · 南北向</small></span></button><button class="item" data-place="主校门"><span class="swatch"></span><span><strong>主校门</strong><small>南侧入口</small></span></button></div><div class="detail"><div class="detail-title" id="detailTitle">校园广场</div><div class="detail-meta" id="detailMeta">位于三栋教学楼围合区域<br>布局依据平面示意图</div></div><div class="mode"><button class="selected" id="buildingsMode">建筑体块</button><button id="routeMode">导览路线</button></div><p class="note">西侧楼的四层走廊、红色门架、砖墙、窗门与两端楼梯已建模。尺寸仍按现场照片估算。</p></aside></section><div class="foot">北朝上 · 建筑位置按平面图估算</div>
+</main><script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script><script type="module">
+import * as THREE from './node_modules/three/build/three.module.js';
+import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js';
+import { createMainGate } from './main-gate.js';
+import { createWestClassroom } from './west-classroom.js';
+import { createMainClassroom } from './main-classroom.js';
+import { createEastClassroom } from './east-classroom.js';
+const canvas=document.querySelector('#scene'),stage=document.querySelector('#stage'),scene=new THREE.Scene();scene.background=new THREE.Color('#e7ece8');
+const camera=new THREE.PerspectiveCamera(34,1,.1,100);camera.position.set(0,8.5,17.5);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.outputColorSpace=THREE.SRGBColorSpace;
+const controls=new OrbitControls(camera,canvas);controls.target.set(0,0,0);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.48;controls.minDistance=3.2;controls.maxDistance=45;
+scene.add(new THREE.HemisphereLight(0xffffff,0x89958d,2.2));const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(-5,12,7);scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(16,12),new THREE.MeshStandardMaterial({color:'#dfe5df',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.08;ground.receiveShadow=true;scene.add(ground);
+const modelGroup=new THREE.Group();scene.add(modelGroup);const targets=new Map();
+function box(name,x,z,w,d,h,color='#c87859'){const obj=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:.82}));obj.position.set(x,h/2,z);obj.castShadow=true;obj.receiveShadow=true;obj.userData.place=name;modelGroup.add(obj);targets.set(name,obj);const roof=new THREE.Mesh(new THREE.BoxGeometry(w+.08,.06,d+.08),new THREE.MeshStandardMaterial({color:'#aab3a9'}));roof.position.set(x,h+.03,z);roof.userData.place=name;modelGroup.add(roof)}
+const eastClassroom = createEastClassroom();
+modelGroup.add(eastClassroom);
+targets.set('东侧教学楼', eastClassroom);
+const mainClassroom = createMainClassroom();
+mainClassroom.position.set(0, 0, -4.15);
+modelGroup.add(mainClassroom);
+targets.set('主教学楼', mainClassroom);
+const westClassroom = createWestClassroom();
+modelGroup.add(westClassroom);
+const plaza=new THREE.Mesh(new THREE.BoxGeometry(10.8,.08,6.15),new THREE.MeshStandardMaterial({color:'#eeece8',roughness:1}));plaza.position.set(0,-.01,.05);plaza.userData.place='校园广场';modelGroup.add(plaza);targets.set('校园广场',plaza);
+const planters = new THREE.Group();
+modelGroup.add(planters);
+for(const [x,z] of [[-4.1,-2.05],[-2.05,-2.1],[0,-2.05],[2.05,-2.1],[4.1,-2.05],[-4.65,0],[4.65,0],[-4.65,2.05],[4.65,2.05],[-1.35,3.15],[1.1,3.05]]){const ring=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.07,28),new THREE.MeshStandardMaterial({color:'#65b7cf'}));ring.position.set(x,.045,z);planters.add(ring);const crown=new THREE.Mesh(new THREE.CylinderGeometry(.23,.26,.38,16),new THREE.MeshStandardMaterial({color:'#77a96a'}));crown.position.set(x,.27,z);planters.add(crown)}
+const eastCourt = new THREE.Group();
+eastCourt.name = '东楼前小广场';
+const courtPaving = new THREE.MeshStandardMaterial({color:'#c9c8c0',roughness:1});
+const courtEdge = new THREE.MeshStandardMaterial({color:'#e5e1d6',roughness:1});
+const courtBase = new THREE.Mesh(new THREE.BoxGeometry(2.75,.055,5.85),courtPaving);
+courtBase.position.set(4.05,.005,-.1); courtBase.userData.place='东楼前小广场'; eastCourt.add(courtBase);
+const courtBorder = new THREE.Mesh(new THREE.BoxGeometry(2.68,.018,5.72),courtEdge);
+courtBorder.position.set(4.05,.038,-.1); eastCourt.add(courtBorder);
+const courtInset = new THREE.Mesh(new THREE.BoxGeometry(2.52,.012,5.56),courtPaving);
+courtInset.position.set(4.05,.052,-.1); eastCourt.add(courtInset);
+modelGroup.add(eastCourt);
+const gate = createMainGate();
+modelGroup.add(gate);
+const routePoints=[new THREE.Vector3(0,.12,4.8),new THREE.Vector3(0,.12,3.3),new THREE.Vector3(0,.12,.2),new THREE.Vector3(0,.12,-3.2)];const routeLine=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(routePoints),48,.045,8,false),new THREE.MeshStandardMaterial({color:'#549daf',emissive:'#275c65',emissiveIntensity:.45}));routeLine.visible=false;scene.add(routeLine);
+function setView(lookAt, offset) {
+  const aspect = Math.max(camera.aspect, 0.4);
+  offset.multiplyScalar(Math.max(1, 1.24 / aspect));
+  controls.target.copy(lookAt);
+  camera.position.copy(lookAt).add(offset);
+  controls.update();
+}
+
+function selectPlace(name, moveCamera = true) {
+  const descriptions = {
+    校园广场: '位于三栋教学楼围合区域',
+    主教学楼: '北侧 · 四层，红砖外廊与橙红框架',
+    西侧教学楼: '西侧 · 四层，外廊面向广场',
+    东侧教学楼: '东侧 · 橙白立面与红砖外廊',
+    主校门: '南侧入口 · 红色雨棚和伸缩门'
+  };
+  document.querySelector('#detailTitle').textContent = name;
+  const source = name === gate.name || name === westClassroom.name || name === mainClassroom.name || name === eastClassroom.name ? '按现场照片估算比例' : '布局依据平面示意图';
+  document.querySelector('#detailMeta').replaceChildren(descriptions[name], document.createElement('br'), source);
+  document.querySelectorAll('.item').forEach(item => {
+    item.setAttribute('aria-pressed', String(item.dataset.place === name));
+  });
+  if (!moveCamera) return;
+  planters.visible = name !== westClassroom.name && name !== eastClassroom.name;
+  eastCourt.visible = true;
+  if (name === gate.name) {
+    setView(new THREE.Vector3(-0.05, 1.65, gate.position.z), new THREE.Vector3(-1.1, 1.1, 9.2));
+    return;
+  }
+  if (name === westClassroom.name) {
+    const focus = westClassroom.position.clone().add(new THREE.Vector3(0.5, 1.08, 0));
+    setView(focus, new THREE.Vector3(6.5, 0.8, 0.9));
+    return;
+  }
+  if (name === eastClassroom.name) {
+    const focus = eastClassroom.position.clone().add(new THREE.Vector3(0, 0.95, 0));
+    setView(focus, new THREE.Vector3(-8, 1.4, 0));
+    return;
+  }
+  const target = targets.get(name).position;
+  setView(new THREE.Vector3(target.x, Math.max(target.y, 0.1), target.z), new THREE.Vector3(0, 16, 15));
+}
+
+document.querySelector('#overviewBtn').addEventListener('click', () => selectPlace('校园广场'));
+document.querySelectorAll('.item').forEach(item => item.addEventListener('click', () => selectPlace(item.dataset.place)));
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let pointerStart;
+canvas.addEventListener('pointerdown', event => {
+  if (event.isPrimary) pointerStart = [event.clientX, event.clientY];
+});
+canvas.addEventListener('click', event => {
+  if (!modelGroup.visible || !pointerStart) return;
+  const [startX, startY] = pointerStart;
+  pointerStart = undefined;
+  if (Math.hypot(event.clientX - startX, event.clientY - startY) > 5) return;
+  const rect = canvas.getBoundingClientRect();
+  pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, 1 - (event.clientY - rect.top) / rect.height * 2);
+  raycaster.setFromCamera(pointer, camera);
+  const hit = raycaster.intersectObjects(modelGroup.children, true).find(({object}) => object.userData.place);
+  if (hit) selectPlace(hit.object.userData.place, false);
+});
+function toggleRoute(){routeLine.visible=!routeLine.visible;document.querySelector('#routeMode').classList.toggle('selected',routeLine.visible);document.querySelector('#routeBtn').classList.toggle('primary',routeLine.visible)}document.querySelector('#routeMode').addEventListener('click',toggleRoute);document.querySelector('#routeBtn').addEventListener('click',toggleRoute);document.querySelector('#buildingsMode').addEventListener('click',()=>{modelGroup.visible=!modelGroup.visible;document.querySelector('#buildingsMode').classList.toggle('selected',modelGroup.visible)});
+function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(stage);resize();function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)}animate();
+const initialView = new URLSearchParams(location.search).get('view');
+selectPlace(initialView === 'west' ? westClassroom.name : gate.name);
+</script></body></html>

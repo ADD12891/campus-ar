@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101816">
+<title>校园实景 AR</title>
+<style>
+:root{color-scheme:dark;--ink:#f2f4ed;--muted:#aab5a9;--panel:#111a16ed;--line:#ffffff26;--lime:#c5e881;--cyan:#80d9d0}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden}
+body{background:#101816;color:var(--ink);font-family:Inter,"Microsoft YaHei",sans-serif}button,a{font:inherit}
+#ar-root{position:fixed;inset:0;overflow:hidden;background:#17211c;isolation:isolate}
+#ar-root video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0!important}
+#ar-root canvas{position:absolute;inset:0;display:block;z-index:1}
+.topbar{position:absolute;z-index:4;inset:max(16px,env(safe-area-inset-top)) 16px auto;display:flex;justify-content:space-between;align-items:center;gap:12px;pointer-events:none}
+.brand,.top-actions{display:flex;align-items:center;gap:10px}
+.brand-card,.icon-button{background:var(--panel);border:1px solid var(--line);box-shadow:0 10px 32px #0003;backdrop-filter:blur(14px)}
+.brand-card{padding:10px 13px;border-radius:14px}.eyebrow{color:var(--muted);font-size:10px;letter-spacing:.12em}
+.title{margin-top:3px;font-size:14px;font-weight:650}
+.icon-button{width:42px;height:42px;border-radius:13px;color:var(--ink);text-decoration:none;display:grid;place-items:center;pointer-events:auto;cursor:pointer}
+.icon-button.active{color:var(--lime);border-color:#c5e8816b}.icon-button svg{width:18px;height:18px}
+.scan-frame{position:absolute;z-index:2;left:50%;top:47%;width:min(76vw,360px);aspect-ratio:1.5;transform:translate(-50%,-50%);border:1px solid #eff4e98c;border-radius:18px;box-shadow:0 0 0 999px #08100b30;pointer-events:none;transition:opacity .25s}
+.scan-frame:before,.scan-frame:after{position:absolute;content:"";width:28px;height:28px;border-color:var(--lime);border-style:solid}
+.scan-frame:before{left:-2px;top:-2px;border-width:3px 0 0 3px;border-radius:17px 0 0}.scan-frame:after{right:-2px;bottom:-2px;border-width:0 3px 3px 0;border-radius:0 0 17px}
+.status{position:absolute;z-index:3;left:50%;top:calc(47% - min(38vw,180px) - 46px);transform:translateX(-50%);width:max-content;max-width:calc(100vw - 36px);padding:9px 13px;border:1px solid var(--line);border-radius:99px;background:var(--panel);font-size:12px;text-align:center;backdrop-filter:blur(14px)}
+.status:before{display:inline-block;width:7px;height:7px;margin-right:8px;border-radius:50%;background:#e8c578;content:"";vertical-align:1px}
+.status.found:before{background:var(--lime);box-shadow:0 0 10px var(--lime)}.status.error:before{background:#ff8876}
+.panel{position:absolute;z-index:4;left:14px;right:14px;bottom:max(16px,env(safe-area-inset-bottom));max-width:520px;margin:0 auto;border:1px solid var(--line);border-radius:20px;padding:16px;background:var(--panel);box-shadow:0 14px 42px #0004;backdrop-filter:blur(18px)}
+.panel-head{display:flex;justify-content:space-between;align-items:start;gap:12px}.panel h1{margin:0;font-size:17px}
+.panel p{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.55}.pulse{color:var(--cyan);font-size:11px;white-space:nowrap}
+.places{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:14px}
+.place{min-height:38px;padding:7px 4px;border:1px solid var(--line);border-radius:10px;background:#ffffff08;color:#d6ded5;font-size:11px;cursor:pointer}
+.place[aria-pressed=true]{color:#162014;border-color:var(--lime);background:var(--lime);font-weight:650}
+.bottom-row{display:flex;gap:8px;margin-top:10px}.action{flex:1;min-height:42px;border:1px solid var(--line);border-radius:11px;background:#ffffff0a;color:var(--ink);cursor:pointer}
+.action.primary{border-color:var(--lime);background:var(--lime);color:#162014;font-weight:700}.action:disabled{opacity:.55;cursor:wait}
+.small-note{margin-top:10px!important;font-size:10px!important}.scan-frame.hidden{opacity:0}
+@media(min-width:720px){.panel{left:24px;right:auto;bottom:24px;width:380px}.scan-frame{top:50%}.status{top:auto;bottom:36px;left:auto;right:26px;transform:none}}
+</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+</head>
+<body>
+<main id="ar-root" aria-label="校园实景增强现实">
+  <header class="topbar">
+    <div class="brand">
+      <a class="icon-button" href="./?view=campus" aria-label="返回校园三维模型"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg></a>
+      <div class="brand-card"><div class="eyebrow">CAMPUS · IMAGE AR</div><div class="title">校园实景 AR</div></div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-button active" id="routeToggle" aria-label="切换导览路线" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="6" r="2.3"/><path d="M8 18h3a3 3 0 003-3v-3a3 3 0 013-3"/></svg></button>
+      <button class="icon-button" id="stopButton" aria-label="关闭摄像头"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8.5h3l2-2h8l2 2h3v9H3z"/><circle cx="12" cy="13" r="3.4"/><path d="M4 4l16 16"/></svg></button>
+    </div>
+  </header>
+  <div class="scan-frame" id="scanFrame"></div>
+  <div class="status" id="status" role="status" aria-live="polite">点击“启动 AR”，允许相机后对准校园航拍图</div>
+  <section class="panel">
+    <div class="panel-head"><div><h1 id="placeTitle">校园导览</h1><p id="placeDescription">对准校园航拍图后，主要建筑、路线和信息点会锁定在图片上。</p></div><div class="pulse" id="trackingState">等待识别</div></div>
+    <div class="places" aria-label="选择建筑">
+      <button class="place" data-place="主教学楼" aria-pressed="false">主教学楼</button>
+      <button class="place" data-place="西侧教学楼" aria-pressed="false">西侧教学楼</button>
+      <button class="place" data-place="东侧教学楼" aria-pressed="false">东侧教学楼</button>
+      <button class="place" data-place="主校门" aria-pressed="false">主校门</button>
+    </div>
+    <div class="bottom-row"><button class="action primary" id="startButton">启动 AR</button><button class="action" id="homeButton">对准提示</button></div>
+    <p class="small-note">识别目标使用项目内航拍图。模型按平面图和现场照片估算比例。</p>
+  </section>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import { MindARThree } from './vendor/mindar/mindar-image-three.prod.js?v=20261124a';
+import { createMainGate } from './main-gate.js';
+import { createWestClassroom } from './west-classroom.js';
+import { createMainClassroom } from './main-classroom.js';
+import { createEastClassroom } from './east-classroom.js';
+
+const root = document.querySelector('#ar-root');
+const status = document.querySelector('#status');
+const startButton = document.querySelector('#startButton');
+const scanFrame = document.querySelector('#scanFrame');
+const trackingState = document.querySelector('#trackingState');
+const descriptions = {
+  主教学楼: '北侧主教学楼 · 图片识别后可查看楼体标记',
+  西侧教学楼: '四层红砖外廊 · 三组橙红门架与连续白色外廊',
+  东侧教学楼: '橙白立面 · 红砖外廊与中央白色格栅',
+  主校门: '南侧主入口 · 红色门架与伸缩门模型'
+};
+let ar;
+let anchor;
+let sceneContent;
+let selectedPlace = '西侧教学楼';
+let found = false;
+let routeVisible = true;
+
+function setStatus(message, kind = '') {
+  status.textContent = message;
+  status.className = 'status ' + kind;
+}
+
+function mapPosition(u, v, height) {
+  return new THREE.Vector3(u - 0.5, (0.5 - v) * (2 / 3), height);
+}
+
+function makeLabel(title, color) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 148;
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#111a16e8';
+  context.beginPath();
+  context.roundRect(3, 3, 506, 142, 38);
+  context.fill();
+  context.strokeStyle = color + 'bb';
+  context.lineWidth = 5;
+  context.stroke();
+  context.fillStyle = color;
+  context.beginPath();
+  context.arc(56, 74, 17, 0, Math.PI * 2);
+  context.fill();
+  context.font = '600 48px Microsoft YaHei, sans-serif';
+  context.fillStyle = '#f2f4ed';
+  context.fillText(title, 92, 91);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+  sprite.scale.set(0.19, 0.055, 1);
+  sprite.renderOrder = 8;
+  return sprite;
+}
+
+function createPointer(color, radius) {
+  const marker = new THREE.Group();
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(radius, 36), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.88, side: THREE.DoubleSide }));
+  const ring = new THREE.Mesh(new THREE.RingGeometry(radius * 1.35, radius * 1.62, 36), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7, side: THREE.DoubleSide }));
+  ring.position.z = 0.0005;
+  marker.add(disc, ring);
+  return marker;
+}
+
+function placeModel(model, u, v, scale) {
+  model.position.copy(mapPosition(u, v, 0.009));
+  model.scale.setScalar(scale);
+  model.rotation.x = Math.PI / 2;
+  anchor.group.add(model);
+}
+
+function createSceneContent() {
+  const data = [
+    { name: '主教学楼', u: 0.55, v: 0.52, color: '#c5e881' },
+    { name: '西侧教学楼', u: 0.25, v: 0.78, color: '#ff805b' },
+    { name: '东侧教学楼', u: 0.76, v: 0.8, color: '#80d9d0' },
+    { name: '主校门', u: 0.5, v: 0.96, color: '#e8c578' }
+  ];
+  const locations = new Map();
+  for (const place of data) {
+    const point = createPointer(place.color, place.name === selectedPlace ? 0.015 : 0.01);
+    point.position.copy(mapPosition(place.u, place.v, 0.014));
+    anchor.group.add(point);
+    const label = makeLabel(place.name, place.color);
+    label.position.copy(mapPosition(place.u, place.v, 0.02));
+    label.position.y += 0.042;
+    anchor.group.add(label);
+    locations.set(place.name, { ...place, point, label });
+  }
+
+  placeModel(createWestClassroom(), 0.25, 0.78, 0.026);
+  placeModel(createMainClassroom(), 0.55, 0.57, 0.03);
+  placeModel(createEastClassroom(), 0.76, 0.8, 0.026);
+  placeModel(createMainGate(), 0.5, 0.96, 0.024);
+
+  const route = new THREE.Group();
+  const mainPoints = [
+    mapPosition(0.5, 0.96, 0.018),
+    mapPosition(0.5, 0.89, 0.018),
+    mapPosition(0.49, 0.77, 0.018),
+    mapPosition(0.52, 0.67, 0.018),
+    mapPosition(0.55, 0.57, 0.018)
+  ];
+  const branches = [
+    [mainPoints[2], mapPosition(0.38, 0.78, 0.018), mapPosition(0.25, 0.78, 0.018)],
+    [mainPoints[2], mapPosition(0.63, 0.79, 0.018), mapPosition(0.76, 0.8, 0.018)]
+  ];
+  const routeMaterial = new THREE.MeshBasicMaterial({ color: '#74d8d2', transparent: true, opacity: 0.78 });
+  for (const points of [mainPoints, ...branches]) {
+    route.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 38, 0.0018, 8, false), routeMaterial));
+  }
+  route.visible = routeVisible;
+  anchor.group.add(route);
+  return { locations, route };
+}
+
+function showPlace(name) {
+  selectedPlace = name;
+  document.querySelector('#placeTitle').textContent = name;
+  document.querySelector('#placeDescription').textContent = descriptions[name];
+  document.querySelectorAll('.place').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.place === name)));
+  if (!anchor) return;
+  if (!sceneContent) return;
+  for (const [placeName, location] of sceneContent.locations) {
+    const selected = placeName === name;
+    location.point.scale.setScalar(selected ? 1.45 : 1);
+    location.label.scale.set(selected ? 0.23 : 0.19, selected ? 0.067 : 0.055, 1);
+  }
+}
+
+document.querySelectorAll('.place').forEach(button => button.addEventListener('click', () => showPlace(button.dataset.place)));
+document.querySelector('#routeToggle').addEventListener('click', event => {
+  routeVisible = !routeVisible;
+  event.currentTarget.classList.toggle('active', routeVisible);
+  event.currentTarget.setAttribute('aria-pressed', String(routeVisible));
+  if (anchor && anchor.group.userData.route) anchor.group.userData.route.visible = routeVisible;
+});
+document.querySelector('#homeButton').addEventListener('click', () => {
+  setStatus(found ? '已识别航拍图 · 选择建筑查看信息' : '把校园航拍图完整放入取景框', found ? 'found' : '');
+});
+document.querySelector('#stopButton').addEventListener('click', () => {
+  if (!ar) return setStatus('相机尚未启动');
+  ar.renderer.setAnimationLoop(null);
+  ar.stop();
+  ar.controller.dispose();
+  ar.renderer.dispose();
+  ar.renderer.domElement.remove();
+  ar.cssRenderer.domElement.remove();
+  ar = undefined;
+  anchor = undefined;
+  sceneContent = undefined;
+  found = false;
+  scanFrame.classList.remove('hidden');
+  trackingState.textContent = '已关闭';
+  startButton.disabled = false;
+  startButton.textContent = '启动 AR';
+  setStatus('相机已关闭');
+});
+
+startButton.addEventListener('click', async () => {
+  startButton.disabled = true;
+  startButton.textContent = '正在启动…';
+  setStatus('正在启动相机');
+  try {
+    ar = new MindARThree({
+      container: root,
+      imageTargetSrc: './assets/campus-aerial.mind',
+      maxTrack: 1,
+      uiLoading: 'no',
+      uiScanning: 'no',
+      uiError: 'no',
+    });
+    ar.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+    anchor = ar.addAnchor(0);
+    sceneContent = createSceneContent();
+    anchor.group.userData.route = sceneContent.route;
+    anchor.onTargetFound = () => {
+      found = true;
+      scanFrame.classList.add('hidden');
+      trackingState.textContent = '图片已锁定';
+      setStatus('已识别校园航拍图', 'found');
+    };
+    anchor.onTargetLost = () => {
+      found = false;
+      scanFrame.classList.remove('hidden');
+      trackingState.textContent = '重新寻找图片';
+      setStatus('正在寻找航拍图');
+    };
+    await ar.start();
+    ar.renderer.setAnimationLoop(() => ar.renderer.render(ar.scene, ar.camera));
+    startButton.textContent = 'AR 已启动';
+    trackingState.textContent = '正在扫描';
+    setStatus('相机已开启 · 对准校园航拍图');
+  } catch (error) {
+    if (ar) {
+      try { ar.renderer.setAnimationLoop(null); ar.stop(); } catch {}
+      if (ar.renderer) {
+        ar.renderer.dispose();
+        ar.renderer.domElement.remove();
+      }
+      if (ar.cssRenderer) ar.cssRenderer.domElement.remove();
+      ar = undefined;
+    }
+    anchor = undefined;
+    sceneContent = undefined;
+    startButton.disabled = false;
+    startButton.textContent = '重试启动';
+    trackingState.textContent = '无法启动';
+    setStatus(error && error.message ? error.message : '相机或识别引擎无法启动', 'error');
+    console.error(error);
+  }
+});
+
+showPlace(selectedPlace);
+</script>
+</body>
+</html>
