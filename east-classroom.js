@@ -10,6 +10,7 @@ export function createEastClassroom() {
   const white = material('#eeeae1', 0.78);
   const trim = material('#c9c5bc', 0.85);
   const glass = material('#334d59', 0.34);
+  const glassLight = material('#617b88', 0.34);
   const frame = material('#343737', 0.55);
   const dark = material('#251f1d', 0.78);
 
@@ -23,6 +24,22 @@ export function createEastClassroom() {
     transform.updateMatrix();
     if (!batches.has(finish)) batches.set(finish, []);
     batches.get(finish).push(transform.matrix.clone());
+  }
+
+  function window(x, y, z, width, height, shade = glass) {
+    box(width, height, 0.035, x, y, z, frame);
+    box(width - 0.045, height - 0.045, 0.018, x, y, z + 0.022, shade);
+    box(width - 0.05, 0.025, 0.025, x, y, z + 0.036, white);
+    box(0.022, height - 0.075, 0.025, x, y, z + 0.036, frame);
+    box(width - 0.04, 0.018, 0.035, x, y + height / 2 + 0.012, z + 0.012, frame);
+    box(width + 0.04, 0.022, 0.07, x, y - height / 2 - 0.012, z + 0.018, trim);
+  }
+
+  function door(x, bottom, z) {
+    box(0.19, 0.49, 0.045, x, bottom + 0.245, z, frame);
+    box(0.15, 0.45, 0.022, x, bottom + 0.235, z + 0.028, orange);
+    box(0.105, 0.075, 0.014, x, bottom + 0.405, z + 0.044, glass);
+    box(0.014, 0.01, 0.01, x + 0.05, bottom + 0.18, z + 0.044, trim);
   }
 
   const length = 5.05;
@@ -41,48 +58,26 @@ export function createEastClassroom() {
     box(length + 0.18, 0.055, 0.12, 0, level + 0.055, 0.78, trim);
   }
 
-  // Upper storey glazing sits above the orange facade band.
+  // Upper-storey windows follow the same framed, divided pattern as the west wing.
   for (let bay = 0; bay < 9; bay++) {
     const x = -2.04 + bay * 0.51;
-    box(0.39, 0.27, 0.04, x, roofY - 0.19, 0.755, glass);
-    box(0.035, 0.31, 0.055, x - 0.21, roofY - 0.19, 0.78, frame);
-    box(0.035, 0.31, 0.055, x + 0.21, roofY - 0.19, 0.78, frame);
-    box(0.44, 0.035, 0.06, x, roofY - 0.025, 0.78, white);
-    box(0.025, 0.26, 0.045, x, roofY - 0.19, 0.81, frame);
-
-    box(0.39, 0.27, 0.04, x, roofY - 0.19, -0.755, glass);
-    box(0.035, 0.31, 0.055, x - 0.21, roofY - 0.19, -0.78, frame);
-    box(0.035, 0.31, 0.055, x + 0.21, roofY - 0.19, -0.78, frame);
-    box(0.44, 0.035, 0.06, x, roofY - 0.025, -0.78, white);
-    box(0.025, 0.26, 0.045, x, roofY - 0.19, -0.81, frame);
+    window(x, roofY - 0.22, 0.755, 0.37, 0.34, bay % 3 === 0 ? glassLight : glass);
+    window(x, roofY - 0.22, -0.755, 0.37, 0.34);
   }
 
-  // Repeated windows break up the broad middle-storey brick facade.
+  // Middle-storey bays line up directly beneath the upper windows.
   for (let bay = 0; bay < 9; bay++) {
-    const x = -2.05 + bay * 0.51;
-    box(0.35, 0.34, 0.045, x, 1.06, 0.755, glass);
-    box(0.035, 0.39, 0.055, x - 0.19, 1.06, 0.78, frame);
-    box(0.035, 0.39, 0.055, x + 0.19, 1.06, 0.78, frame);
-    box(0.4, 0.035, 0.055, x, 1.26, 0.78, white);
-    box(0.4, 0.035, 0.055, x, 0.86, 0.78, white);
-    box(0.025, 0.29, 0.045, x, 1.06, 0.81, frame);
+    const x = -2.04 + bay * 0.51;
+    window(x, base + floor * 1.5, 0.755, 0.37, 0.38, bay % 3 === 0 ? glassLight : glass);
   }
 
   // Keep the entrance rhythm clear, with doors spaced between classroom windows.
   for (let bay = 0; bay < 9; bay++) {
     const x = -2.05 + bay * 0.51;
     if (bay === 1 || bay === 4 || bay === 7) {
-      box(0.23, 0.5, 0.05, x, 0.35, 0.755, frame);
-      box(0.18, 0.45, 0.025, x, 0.325, 0.787, orange);
-      box(0.13, 0.08, 0.018, x, 0.515, 0.804, glass);
-      box(0.014, 0.012, 0.012, x + 0.06, 0.14, 0.806, trim);
+      door(x, base, 0.755);
     } else {
-      box(0.35, 0.3, 0.045, x, 0.28, 0.755, glass);
-      box(0.035, 0.35, 0.055, x - 0.19, 0.28, 0.78, frame);
-      box(0.035, 0.35, 0.055, x + 0.19, 0.28, 0.78, frame);
-      box(0.4, 0.035, 0.055, x, 0.46, 0.78, white);
-      box(0.4, 0.035, 0.055, x, 0.1, 0.78, white);
-      box(0.025, 0.26, 0.045, x, 0.28, 0.81, frame);
+      window(x, base + 0.29, 0.755, 0.37, 0.31, bay % 3 === 0 ? glassLight : glass);
     }
   }
 
