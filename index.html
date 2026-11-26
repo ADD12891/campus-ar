@@ -130,9 +130,9 @@ for (const [index, character] of [...'石泉县城关第二小学'].entries()) {
 }
 const schoolPlateTexture = new THREE.CanvasTexture(schoolPlateCanvas);
 schoolPlateTexture.colorSpace = THREE.SRGBColorSpace;
-const schoolPlate = new THREE.Mesh(new THREE.PlaneGeometry(.62, 2.32),
+const schoolPlate = new THREE.Mesh(new THREE.PlaneGeometry(.62, 1.72),
   new THREE.MeshBasicMaterial({map:schoolPlateTexture,side:THREE.DoubleSide}));
-schoolPlate.position.set(-1.94, 1.52, .485);
+schoolPlate.position.set(-1.94, 1.17, .485);
 schoolPlate.userData.place = gate.name;
 gate.add(schoolPlate);
 modelGroup.add(gate);
