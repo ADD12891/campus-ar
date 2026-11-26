@@ -107,25 +107,32 @@ const compass = new THREE.Mesh(new THREE.PlaneGeometry(1.45,1.45),new THREE.Mesh
 compass.rotation.x=-Math.PI/2; compass.position.set(0,.075,0); compass.userData.place='校园广场'; modelGroup.add(compass);
 const gate = createMainGate();
 const schoolPlateCanvas = document.createElement('canvas');
-schoolPlateCanvas.width = 320; schoolPlateCanvas.height = 480;
+schoolPlateCanvas.width = 320; schoolPlateCanvas.height = 1200;
 const schoolPlateContext = schoolPlateCanvas.getContext('2d');
-schoolPlateContext.fillStyle = '#54372b';
-schoolPlateContext.fillRect(0, 0, 320, 480);
+schoolPlateContext.fillStyle = '#49382d';
+schoolPlateContext.fillRect(0, 0, 320, 1200);
+schoolPlateContext.strokeStyle = '#b18a4d'; schoolPlateContext.lineWidth = 5;
+schoolPlateContext.strokeRect(12, 12, 296, 1176);
 schoolPlateContext.textAlign = 'center'; schoolPlateContext.textBaseline = 'middle';
-schoolPlateContext.font = 'bold 62px Microsoft YaHei, sans-serif';
-schoolPlateContext.shadowColor = '#2e1b0d'; schoolPlateContext.shadowBlur = 4;
+schoolPlateContext.font = 'bold 82px FangSong, STSong, SimSun, serif';
+schoolPlateContext.shadowColor = '#24150b'; schoolPlateContext.shadowBlur = 5;
 schoolPlateContext.shadowOffsetY = 3;
-const schoolGold = schoolPlateContext.createLinearGradient(0, 45, 0, 435);
-schoolGold.addColorStop(0, '#fff0a6'); schoolGold.addColorStop(.38, '#d6a642');
-schoolGold.addColorStop(.72, '#9d6a1e'); schoolGold.addColorStop(1, '#f4d77b');
+const schoolGold = schoolPlateContext.createLinearGradient(24, 0, 296, 0);
+schoolGold.addColorStop(0, '#a9782d'); schoolGold.addColorStop(.28, '#f8e6a0');
+schoolGold.addColorStop(.56, '#c29442'); schoolGold.addColorStop(.82, '#fff0b1');
+schoolGold.addColorStop(1, '#9b6b27');
 schoolPlateContext.fillStyle = schoolGold;
-schoolPlateContext.fillText('石泉县城关', 160, 150);
-schoolPlateContext.fillText('第二小学', 160, 325);
+schoolPlateContext.strokeStyle = '#704a1c'; schoolPlateContext.lineWidth = 2;
+for (const [index, character] of [...'石泉县城关第二小学'].entries()) {
+  const y = 78 + index * 130;
+  schoolPlateContext.strokeText(character, 160, y);
+  schoolPlateContext.fillText(character, 160, y);
+}
 const schoolPlateTexture = new THREE.CanvasTexture(schoolPlateCanvas);
 schoolPlateTexture.colorSpace = THREE.SRGBColorSpace;
-const schoolPlate = new THREE.Mesh(new THREE.PlaneGeometry(.64, .96),
+const schoolPlate = new THREE.Mesh(new THREE.PlaneGeometry(.62, 2.32),
   new THREE.MeshBasicMaterial({map:schoolPlateTexture,side:THREE.DoubleSide}));
-schoolPlate.position.set(-1.94, 1.77, .485);
+schoolPlate.position.set(-1.94, 1.52, .485);
 schoolPlate.userData.place = gate.name;
 gate.add(schoolPlate);
 modelGroup.add(gate);
